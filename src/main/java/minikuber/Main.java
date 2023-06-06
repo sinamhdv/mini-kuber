@@ -13,7 +13,7 @@ public class Main {
 		return scanner;
 	}
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		System.out.println("Please choose a role:");
 		System.out.println("1) server");
 		System.out.println("2) client");
