@@ -18,7 +18,6 @@ public class ClientHandler extends Thread {
 	private ClientType clientType;
 	private int workerCapacity;
 	private String nodeID;
-	private boolean isActive = true;
 
 	public ClientHandler(Socket socket) {
 		this.socket = socket;
@@ -33,11 +32,8 @@ public class ClientHandler extends Thread {
 	public Socket getSocket() {
 		return socket;
 	}
-	public boolean isActive() {
-		return isActive;
-	}
-	public void setActive(boolean isActive) {
-		this.isActive = isActive;
+	public int getWorkerCapacity() {
+		return workerCapacity;
 	}
 
 	@Override
@@ -82,10 +78,10 @@ public class ClientHandler extends Thread {
 			Message response;
 			switch (request.getType()) {
 				case GET_NODES:
-					response = Controller.getNodes();
+					response = Controller.listNodes();
 					break;
 				case GET_TASKS:
-					response = Controller.getTasks();
+					response = Controller.listTasks();
 					break;
 				case CREATE_TASK:
 					response = Controller.createTask(request.getContent());
@@ -107,7 +103,7 @@ public class ClientHandler extends Thread {
 		}
 	}
 
-	private void getWorkerCapacity() throws IOException {
+	private void receiveWorkerCapacity() throws IOException {
 		Message message = Message.fromJson(sockin.readUTF());
 		if (message.getType() == MessageType.DECLARE_CAPACITY) {
 			workerCapacity = Integer.parseInt(message.getContent());
@@ -116,7 +112,7 @@ public class ClientHandler extends Thread {
 	}
 
 	private void handleWorker() throws IOException {
-		getWorkerCapacity();
+		receiveWorkerCapacity();
 		socket.setSoTimeout(3000);
 		while (true) {
 			try {
@@ -127,5 +123,9 @@ public class ClientHandler extends Thread {
 				break;
 			}
 		}
+	}
+
+	public void sendMessage(Message message) {
+		
 	}
 }

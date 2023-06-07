@@ -1,14 +1,19 @@
 package minikuber.server;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.Queue;
+
+import minikuber.shared.Message;
+import minikuber.shared.MessageType;
 
 public class WorkerNode {
-	private final String id;
-	private final ArrayList<String> tasks = new ArrayList<>();
+	private final ArrayList<Task> activeTasks = new ArrayList<>();
 	private final ClientHandler handler;
+	private boolean isActive = true;
+	private final Queue<Task> pendingTasks = new LinkedList<>();
 
-	public WorkerNode(String id, ClientHandler handler) {
-		this.id = id;
+	public WorkerNode(ClientHandler handler) {
 		this.handler = handler;
 	}
 
@@ -16,11 +21,29 @@ public class WorkerNode {
 		return handler;
 	}
 
-	public String getId() {
-		return id;
+	public ArrayList<Task> getActiveTasks() {
+		return activeTasks;
 	}
 
-	public ArrayList<String> getTasks() {
-		return tasks;
+	public boolean isActive() {
+		return isActive;
+	}
+
+	public void setActive(boolean isActive) {
+		this.isActive = isActive;
+	}
+
+	public Queue<Task> getPendingTasks() {
+		return pendingTasks;
+	}
+
+	public void addActiveTask(Task task) {
+		activeTasks.add(task);
+		handler.sendMessage(new Message(MessageType.CREATE_TASK, task.getName()));
+	}
+
+	public void removeActiveTask(Task task) {
+		activeTasks.remove(task);
+		handler.sendMessage(new Message(MessageType.DELETE_TASK, task.getName()));
 	}
 }
