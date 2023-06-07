@@ -15,6 +15,7 @@ public enum Command {
 	}
 
 	public static Matcher getMatcher(String input, Command command) {
-		return Pattern.compile(command.regex).matcher(input);
+		Matcher matcher = Pattern.compile(command.regex).matcher(input);
+		return (matcher.matches() ? matcher : null);
 	}
 }
