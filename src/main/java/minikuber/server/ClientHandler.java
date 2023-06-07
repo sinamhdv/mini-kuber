@@ -16,10 +16,28 @@ public class ClientHandler extends Thread {
 	private DataInputStream sockin;
 	private DataOutputStream sockout;
 	private ClientType clientType;
-	private String name;
+	private int workerCapacity;
+	private String nodeID;
+	private boolean isActive = true;
 
 	public ClientHandler(Socket socket) {
 		this.socket = socket;
+	}
+
+	public void setNodeID(String nodeName) {
+		this.nodeID = nodeName;
+	}
+	public String getNodeID() {
+		return nodeID;
+	}
+	public Socket getSocket() {
+		return socket;
+	}
+	public boolean isActive() {
+		return isActive;
+	}
+	public void setActive(boolean isActive) {
+		this.isActive = isActive;
 	}
 
 	@Override
@@ -43,18 +61,19 @@ public class ClientHandler extends Thread {
 		Message message = Message.fromJson(sockin.readUTF());
 		if (message.getType() == MessageType.DECLARE_ROLE) {
 			clientType = ClientType.valueOf(message.getContent());
-			chooseClientName();
+			chooseClientID();
 			Utils.log(LogType.INFO,
-				"[" + socket.getInetAddress() + ":" + socket.getPort() + "] declared role as " + clientType + " => " + name);
+				"[" + socket.getInetAddress() + ":" + socket.getPort() + "] declared role as " + clientType + " => " + nodeID);
 		}
 	}
 
-	private void chooseClientName() {
-		name = "client1";	// TODO
+	private void chooseClientID() {
+		if (clientType == ClientType.WORKER) Controller.addWorker(this);
+		else nodeID = socket.getInetAddress() + ":" + socket.getPort();
 	}
 	
-	private void customLog(LogType logType, String message) {
-		Utils.log(logType, "[" + name + "] " + message);
+	private void namedLog(LogType logType, String message) {
+		Utils.log(logType, "[" + nodeID + "] " + message);
 	}
 
 	private void handleClient() throws IOException {
@@ -88,7 +107,16 @@ public class ClientHandler extends Thread {
 		}
 	}
 
+	private void getWorkerCapacity() throws IOException {
+		Message message = Message.fromJson(sockin.readUTF());
+		if (message.getType() == MessageType.DECLARE_CAPACITY) {
+			workerCapacity = Integer.parseInt(message.getContent());
+			namedLog(LogType.INFO, "Declared capacity of " + workerCapacity);
+		}
+	}
+
 	private void handleWorker() throws IOException {
-		// TODO
+		getWorkerCapacity();
+
 	}
 }

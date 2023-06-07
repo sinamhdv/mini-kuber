@@ -18,6 +18,7 @@ public class Client {
 	private final DataInputStream sockin;
 	private final DataOutputStream sockout;
 	private final ClientType clientType;
+	private int workerCapacity;
 
 	public Client(String host, int port, ClientType clientType) throws IOException {
 		this.clientType = clientType;
@@ -34,7 +35,18 @@ public class Client {
 	}
 
 	private void runWorker() throws IOException {
-		// TODO
+		System.out.print("Enter capacity: ");
+		try {
+			workerCapacity = Integer.parseInt(Main.getScanner().nextLine());
+		} catch (NumberFormatException ex) {
+			System.out.println("Invalid number, using the default value of 4");
+			workerCapacity = 4;
+		}
+		declareCapacity();
+	}
+
+	private void declareCapacity() throws IOException {
+		sockout.writeUTF(new Message(MessageType.DECLARE_CAPACITY, Integer.toString(workerCapacity)).toJson());
 	}
 
 	private void runClient() throws IOException {

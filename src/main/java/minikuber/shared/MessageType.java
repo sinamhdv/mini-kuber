@@ -12,6 +12,10 @@ public enum MessageType {
 	CORDON,
 	UNCORDON,
 
+	// Worker-Specific Types
+	DECLARE_CAPACITY,
+	
+
 	// Response Types
 	OK,
 	ERROR,
