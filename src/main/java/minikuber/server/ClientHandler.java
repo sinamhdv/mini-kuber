@@ -117,6 +117,15 @@ public class ClientHandler extends Thread {
 
 	private void handleWorker() throws IOException {
 		getWorkerCapacity();
-
+		socket.setSoTimeout(3000);
+		while (true) {
+			try {
+				sockin.readUTF();
+			} catch (IOException ex) {
+				namedLog(LogType.ERROR, "Disconnected");
+				Controller.removeWorker(nodeID);
+				break;
+			}
+		}
 	}
 }

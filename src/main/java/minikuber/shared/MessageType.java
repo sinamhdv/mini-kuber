@@ -14,7 +14,7 @@ public enum MessageType {
 
 	// Worker-Specific Types
 	DECLARE_CAPACITY,
-	
+	PING,
 
 	// Response Types
 	OK,

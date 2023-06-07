@@ -18,6 +18,10 @@ public class Controller {
 		workers.put(name, handler);
 	}
 
+	public synchronized static void removeWorker(String id) {
+		workers.remove(id);
+	}
+
 	public synchronized static Message getTasks() {
 		return new Message(MessageType.OK, "");
 	}

@@ -43,6 +43,26 @@ public class Client {
 			workerCapacity = 4;
 		}
 		declareCapacity();
+		new WorkerPing(sockout).start();
+		while (true) {
+			Message message = Message.fromJson(sockin.readUTF());
+			switch (message.getType()) {
+				case CREATE_TASK:
+					Utils.log(LogType.OK, "New task added: " + message.getContent());
+					break;
+				case DELETE_TASK:
+					Utils.log(LogType.OK, "Deleted task: " + message.getContent());
+					break;
+				case CORDON:
+					Utils.log(LogType.INFO, "Worker deactivated");
+					break;
+				case UNCORDON:
+					Utils.log(LogType.INFO, "Worker activated");
+					break;
+				default:
+					break;
+			}
+		}
 	}
 
 	private void declareCapacity() throws IOException {
