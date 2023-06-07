@@ -6,6 +6,10 @@ import java.util.regex.Pattern;
 public enum Command {
 	GET_TASKS("get tasks"),
 	GET_NODES("get nodes"),
+	CREATE_TASK("create task --name=(?<name>\\w+)( --node=(?<node>\\w+))?"),
+	DELETE_TASK("delete task --name=(?<name>\\w+)"),
+	CORDON("cordon node (?<name>\\w+)"),
+	UNCORDON("uncordon node (?<name>\\w+)"),
 	;
 
 	private final String regex;

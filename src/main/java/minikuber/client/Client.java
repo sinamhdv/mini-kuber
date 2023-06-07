@@ -7,6 +7,7 @@ import java.net.Socket;
 import java.util.regex.Matcher;
 
 import minikuber.Main;
+import minikuber.shared.ClientType;
 import minikuber.shared.LogType;
 import minikuber.shared.Message;
 import minikuber.shared.MessageType;
@@ -25,6 +26,7 @@ public class Client {
 	}
 
 	public void run() throws IOException {
+		declareRole();
 		while (true) {
 			System.out.print("[minikuber]> ");
 			String command = Main.getScanner().nextLine();
@@ -34,6 +36,15 @@ public class Client {
 				request = new Message(MessageType.GET_TASKS, "");
 			else if ((matcher = Command.getMatcher(command, Command.GET_NODES)) != null)
 				request = new Message(MessageType.GET_NODES, "");
+			else if ((matcher = Command.getMatcher(command, Command.CREATE_TASK)) != null)
+				request = new Message(MessageType.CREATE_TASK, matcher.group("name") +
+					(matcher.group("node") == null ? "" : " " + matcher.group("node")));
+			else if ((matcher = Command.getMatcher(command, Command.DELETE_TASK)) != null)
+				request = new Message(MessageType.DELETE_TASK, matcher.group("name"));
+			else if ((matcher = Command.getMatcher(command, Command.CORDON)) != null)
+				request = new Message(MessageType.CORDON, matcher.group("name"));
+			else if ((matcher = Command.getMatcher(command, Command.UNCORDON)) != null)
+				request = new Message(MessageType.UNCORDON, matcher.group("name"));
 			else
 				System.out.println("wrong command!");
 
@@ -43,5 +54,9 @@ public class Client {
 				Utils.log(LogType.valueOf(response.getType().name()), response.getContent());
 			}
 		}
+	}
+
+	private void declareRole() throws IOException {
+		sockout.writeUTF(new Message(MessageType.DECLARE_ROLE, ClientType.CLIENT.name()).toJson());
 	}
 }
