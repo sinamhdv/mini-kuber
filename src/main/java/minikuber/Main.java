@@ -3,8 +3,8 @@ package minikuber;
 import java.util.Scanner;
 
 import minikuber.client.ClientMain;
-import minikuber.worker.WorkerMain;
 import minikuber.server.ServerMain;
+import minikuber.shared.ClientType;
 
 public class Main {
 	private static Scanner scanner = new Scanner(System.in);
@@ -25,10 +25,10 @@ public class Main {
 				ServerMain.run();
 				break;
 			case "2":
-				ClientMain.run();
+				ClientMain.run(ClientType.CLIENT);
 				break;
 			case "3":
-				WorkerMain.run();
+				ClientMain.run(ClientType.WORKER);
 				break;
 			default:
 				System.out.println("Error: Invalid role");

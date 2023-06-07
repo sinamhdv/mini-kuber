@@ -17,8 +17,10 @@ public class Client {
 	private final Socket socket;
 	private final DataInputStream sockin;
 	private final DataOutputStream sockout;
+	private final ClientType clientType;
 
-	public Client(String host, int port) throws IOException {
+	public Client(String host, int port, ClientType clientType) throws IOException {
+		this.clientType = clientType;
 		socket = new Socket(host, port);
 		sockin = new DataInputStream(socket.getInputStream());
 		sockout = new DataOutputStream(socket.getOutputStream());
@@ -27,6 +29,15 @@ public class Client {
 
 	public void run() throws IOException {
 		declareRole();
+		if (clientType == ClientType.CLIENT) runClient();
+		else runWorker();
+	}
+
+	private void runWorker() throws IOException {
+		// TODO
+	}
+
+	private void runClient() throws IOException {
 		while (true) {
 			System.out.print("[minikuber]> ");
 			String command = Main.getScanner().nextLine();
@@ -57,6 +68,6 @@ public class Client {
 	}
 
 	private void declareRole() throws IOException {
-		sockout.writeUTF(new Message(MessageType.DECLARE_ROLE, ClientType.CLIENT.name()).toJson());
+		sockout.writeUTF(new Message(MessageType.DECLARE_ROLE, clientType.name()).toJson());
 	}
 }
