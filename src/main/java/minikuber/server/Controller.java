@@ -6,20 +6,17 @@ import minikuber.shared.Message;
 import minikuber.shared.MessageType;
 
 public class Controller {
-	private static HashMap<String, ClientHandler> workers = new HashMap<>();
-
-	public static HashMap<String, ClientHandler> getWorkers() {
-		return workers;
-	}
+	private static final HashMap<String, WorkerNode> workers = new HashMap<>();
 
 	public synchronized static void addWorker(ClientHandler handler) {
 		String name = "worker" + workers.size();
 		handler.setNodeID(name);
-		workers.put(name, handler);
+		workers.put(name, new WorkerNode(name, handler));
 	}
 
 	public synchronized static void removeWorker(String id) {
 		workers.remove(id);
+		// TODO: remove assigned tasks
 	}
 
 	public synchronized static Message getTasks() {
@@ -30,10 +27,10 @@ public class Controller {
 		if (workers.isEmpty())
 			return new Message(MessageType.ERROR, "No worker in the cluster");
 		String result = "\nList of worker nodes:\n";
-		for (ClientHandler node : workers.values()) {
-			result += node.getNodeID() + " [" +
-				node.getSocket().getInetAddress() + ":" + node.getSocket().getPort() + "] (" +
-				(node.isActive() ? "ACTIVE" : "ASLEEP") + ")\n";
+		for (WorkerNode node : workers.values()) {
+			result += node.getHandler().getNodeID() + " [" +
+				node.getHandler().getSocket().getInetAddress() + ":" + node.getHandler().getSocket().getPort() + "] (" +
+				(node.getHandler().isActive() ? "ACTIVE" : "ASLEEP") + ")\n";
 		}
 		return new Message(MessageType.OK, result);
 	}
@@ -42,7 +39,6 @@ public class Controller {
 		String name = requestData.split(" ")[0];
 		String worker = null;
 		if (requestData.contains(" ")) worker = requestData.split(" ")[1];
-		return new Message(MessageType.OK, "");
 	}
 
 	public synchronized static Message deleteTask(String name) {
