@@ -113,6 +113,7 @@ public class ClientHandler extends Thread {
 
 	private void handleWorker() throws IOException {
 		receiveWorkerCapacity();
+		Controller.reschedule();
 		socket.setSoTimeout(3000);
 		while (true) {
 			try {
@@ -126,6 +127,8 @@ public class ClientHandler extends Thread {
 	}
 
 	public void sendMessage(Message message) {
-		
+		try {
+			sockout.writeUTF(message.toJson());
+		} catch (IOException ex) {}
 	}
 }

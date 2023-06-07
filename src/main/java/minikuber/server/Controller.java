@@ -13,17 +13,25 @@ public class Controller {
 	private static final Queue<Task> pendingTasks = new LinkedList<>();
 
 	public synchronized static void addWorker(ClientHandler handler) {
-		String name = "worker" + workers.size();
+		String name;
+		for (int i = 0; ; i++) {
+			if (workers.get("worker" + i) == null) {
+				name = "worker" + i;
+				break;
+			}
+		}
 		handler.setNodeID(name);
 		workers.put(name, new WorkerNode(handler));
-		reschedule();
 	}
 
 	public synchronized static void removeWorker(String id) {
 		WorkerNode worker = workers.get(id);
-		for (Task task : worker.getActiveTasks())
-			if (task.getIntendedWorker() == null)
+		for (Task task : worker.getActiveTasks()) {
+			if (task.getIntendedWorker() == null) {
+				task.setCurrentWorker(null);
 				pendingTasks.add(task);
+			}
+		}
 		workers.remove(id);
 		reschedule();
 	}
@@ -86,7 +94,7 @@ public class Controller {
 		reschedule();
 		if (task.getCurrentWorker() != null)
 			return new Message(MessageType.OK, "Task scheduled on " + task.getCurrentWorker());
-		return new Message(MessageType.OK, "Task added to pending queue");
+		return new Message(MessageType.WARNING, "Task added to pending queue");
 	}
 
 	public synchronized static Message deleteTask(String name) {
@@ -117,12 +125,13 @@ public class Controller {
 		return new Message(MessageType.OK, "Success");
 	}
 
-	private synchronized static void reschedule() {
+	public synchronized static void reschedule() {
 		for (WorkerNode worker : workers.values()) {
 			if (!worker.isActive()) continue;
 			int capacity = worker.getHandler().getWorkerCapacity();
-			while (worker.getActiveTasks().size() < capacity && !worker.getPendingTasks().isEmpty())
+			while (worker.getActiveTasks().size() < capacity && !worker.getPendingTasks().isEmpty()) {
 				worker.addActiveTask(worker.getPendingTasks().remove());
+			}
 			while (worker.getActiveTasks().size() < capacity && !pendingTasks.isEmpty())
 				worker.addActiveTask(pendingTasks.remove());
 		}

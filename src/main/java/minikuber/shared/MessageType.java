@@ -18,5 +18,6 @@ public enum MessageType {
 
 	// Response Types
 	OK,
+	WARNING,
 	ERROR,
 }

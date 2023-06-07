@@ -21,6 +21,15 @@ public class Client {
 	private int workerCapacity;
 
 	public Client(String host, int port, ClientType clientType) throws IOException {
+		if (clientType == ClientType.WORKER) {
+			System.out.print("Enter capacity: ");
+			try {
+				workerCapacity = Integer.parseInt(Main.getScanner().nextLine());
+			} catch (NumberFormatException ex) {
+				System.out.println("Invalid number, using the default value of 4");
+				workerCapacity = 4;
+			}
+		}
 		this.clientType = clientType;
 		socket = new Socket(host, port);
 		sockin = new DataInputStream(socket.getInputStream());
@@ -35,13 +44,6 @@ public class Client {
 	}
 
 	private void runWorker() throws IOException {
-		System.out.print("Enter capacity: ");
-		try {
-			workerCapacity = Integer.parseInt(Main.getScanner().nextLine());
-		} catch (NumberFormatException ex) {
-			System.out.println("Invalid number, using the default value of 4");
-			workerCapacity = 4;
-		}
 		declareCapacity();
 		new WorkerPing(sockout).start();
 		while (true) {

@@ -39,11 +39,12 @@ public class WorkerNode {
 
 	public void addActiveTask(Task task) {
 		activeTasks.add(task);
+		task.setCurrentWorker(handler.getNodeID());
 		handler.sendMessage(new Message(MessageType.CREATE_TASK, task.getName()));
 	}
 
 	public void removeActiveTask(Task task) {
-		activeTasks.remove(task);
-		handler.sendMessage(new Message(MessageType.DELETE_TASK, task.getName()));
+		if (activeTasks.remove(task))
+			handler.sendMessage(new Message(MessageType.DELETE_TASK, task.getName()));
 	}
 }
