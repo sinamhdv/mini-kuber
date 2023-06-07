@@ -8,7 +8,7 @@ import java.net.Socket;
 import minikuber.shared.ClientType;
 import minikuber.shared.LogType;
 import minikuber.shared.Message;
-import minikuber.shared.MessageAction;
+import minikuber.shared.MessageType;
 import minikuber.shared.Utils;
 
 public class ClientHandler extends Thread {
@@ -34,22 +34,31 @@ public class ClientHandler extends Thread {
 				handleWorker();
 			socket.close();
 		} catch (IOException ex) {
-			ex.printStackTrace();
+			Utils.log(LogType.ERROR, "Lost connection with " + socket.getInetAddress() + ":" + socket.getPort());
 		}
 	}
 
 	private void findClientType() throws IOException {
 		Message message = Message.fromJson(sockin.readUTF());
-		if (message.getAction() == MessageAction.DECLARE_ROLE) {
+		if (message.getType() == MessageType.DECLARE_ROLE) {
 			clientType = ClientType.valueOf(message.getContent());
 		}
 	}
 
-	private void handleClient() {
-
+	private void handleClient() throws IOException {
+		while (true) {
+			Message command = Message.fromJson(sockin.readUTF());
+			Message response;
+			switch (command.getType()) {
+				default:
+					response = new Message(MessageType.ERROR, "wrong command!");
+					break;
+			}
+			sockout.writeUTF(response.toJson());
+		}
 	}
 
-	private void handleWorker() {
+	private void handleWorker() throws IOException {
 		
 	}
 }

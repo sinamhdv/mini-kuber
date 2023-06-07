@@ -3,16 +3,16 @@ package minikuber.shared;
 import com.google.gson.Gson;
 
 public class Message {
-	private final MessageAction action;
+	private final MessageType type;
 	private final String content;
 
-	public Message(MessageAction action, String content) {
-		this.action = action;
+	public Message(MessageType type, String content) {
+		this.type = type;
 		this.content = content;
 	}
 
-	public MessageAction getAction() {
-		return action;
+	public MessageType getType() {
+		return type;
 	}
 
 	public String getContent() {
