@@ -25,15 +25,8 @@ public class Controller {
 	}
 
 	public synchronized static void removeWorker(String id) {
-		WorkerNode worker = workers.get(id);
-		for (Task task : worker.getActiveTasks()) {
-			if (task.getIntendedWorker() == null) {
-				task.setCurrentWorker(null);
-				pendingTasks.add(task);
-			}
-		}
-		workers.remove(id);
-		reschedule();
+		deactivate(id);
+		workers.get(id).disconnect();
 	}
 
 	private static ArrayList<Task> getAllTasks() {
@@ -73,9 +66,12 @@ public class Controller {
 			return new Message(MessageType.ERROR, "No worker in the cluster");
 		String result = "\nList of worker nodes:\n";
 		for (WorkerNode node : workers.values()) {
-			result += node.getHandler().getNodeID() + " [" +
-				node.getHandler().getSocket().getInetAddress() + ":" + node.getHandler().getSocket().getPort() + "] (" +
-				(node.isActive() ? "ACTIVE" : "ASLEEP") + ")\n";
+			if (node.getHandler() == null)
+				result += node.getId() + " (status=DISCONNECTED)\n";
+			else
+				result += node.getId() + " [" +
+					node.getHandler().getSocket().getInetAddress() + ":" + node.getHandler().getSocket().getPort() +
+					"] (status=" + (node.isActive() ? "ACTIVE" : "DISABLED") + ")\n";
 		}
 		return new Message(MessageType.OK, result);
 	}
@@ -88,6 +84,8 @@ public class Controller {
 			return new Message(MessageType.ERROR, "This task already exists");
 		if (worker != null && workers.get(worker) == null)
 			return new Message(MessageType.ERROR, "No such worker found");
+		if (worker != null && workers.get(worker).getHandler() == null)
+			return new Message(MessageType.ERROR, "The node is disconnected");
 		Task task = new Task(name, worker);
 		if (task.getIntendedWorker() == null) pendingTasks.add(task);
 		else workers.get(task.getIntendedWorker()).getPendingTasks().add(task);
@@ -111,7 +109,24 @@ public class Controller {
 	}
 
 	public synchronized static Message deactivate(String name) {
-		return new Message(MessageType.OK, "");
+		WorkerNode worker = workers.get(name);
+		if (worker == null)
+			return new Message(MessageType.ERROR, "No such worker");
+		if (!worker.isActive())
+			return new Message(MessageType.ERROR, "This node is already disabled");
+		if (worker.getHandler() == null)
+			return new Message(MessageType.ERROR, "The node is disconnected");
+		for (Task task : worker.getActiveTasks()) {
+			task.setCurrentWorker(null);
+			if (task.getIntendedWorker() == null)
+				pendingTasks.add(task);
+			else
+				worker.getPendingTasks().add(task);
+		}
+		worker.getActiveTasks().clear();
+		worker.setActive(false);
+		reschedule();
+		return new Message(MessageType.OK, "Success");
 	}
 
 	public synchronized static Message activate(String name) {
@@ -120,6 +135,8 @@ public class Controller {
 			return new Message(MessageType.ERROR, "No such worker");
 		if (node.isActive())
 			return new Message(MessageType.ERROR, "This node is already active");
+		if (node.getHandler() == null)
+			return new Message(MessageType.ERROR, "The node is disconnected");
 		node.setActive(true);
 		reschedule();
 		return new Message(MessageType.OK, "Success");
@@ -129,9 +146,8 @@ public class Controller {
 		for (WorkerNode worker : workers.values()) {
 			if (!worker.isActive()) continue;
 			int capacity = worker.getHandler().getWorkerCapacity();
-			while (worker.getActiveTasks().size() < capacity && !worker.getPendingTasks().isEmpty()) {
+			while (worker.getActiveTasks().size() < capacity && !worker.getPendingTasks().isEmpty())
 				worker.addActiveTask(worker.getPendingTasks().remove());
-			}
 			while (worker.getActiveTasks().size() < capacity && !pendingTasks.isEmpty())
 				worker.addActiveTask(pendingTasks.remove());
 		}

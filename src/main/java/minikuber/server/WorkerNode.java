@@ -9,16 +9,29 @@ import minikuber.shared.MessageType;
 
 public class WorkerNode {
 	private final ArrayList<Task> activeTasks = new ArrayList<>();
-	private final ClientHandler handler;
+	private ClientHandler handler;
 	private boolean isActive = true;
 	private final Queue<Task> pendingTasks = new LinkedList<>();
+	private final String id;
 
 	public WorkerNode(ClientHandler handler) {
 		this.handler = handler;
+		this.id = handler.getNodeID();
 	}
 
+	public String getId() {
+		return id;
+	}
+	
 	public ClientHandler getHandler() {
 		return handler;
+	}
+
+	public void disconnect() {
+		handler = null;
+		isActive = false;
+		activeTasks.clear();
+		pendingTasks.clear();
 	}
 
 	public ArrayList<Task> getActiveTasks() {
@@ -31,6 +44,9 @@ public class WorkerNode {
 
 	public void setActive(boolean isActive) {
 		this.isActive = isActive;
+		try {
+			handler.sendMessage(new Message(isActive ? MessageType.UNCORDON : MessageType.CORDON, ""));
+		} catch (Exception ex) {}
 	}
 
 	public Queue<Task> getPendingTasks() {
