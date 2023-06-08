@@ -10,7 +10,7 @@ import minikuber.shared.MessageType;
 
 public class Controller {
 	private static final HashMap<String, WorkerNode> workers = new HashMap<>();
-	private static final Queue<Task> pendingTasks = new LinkedList<>();
+	private static final ArrayList<Task> pendingTasks = new ArrayList<>();
 
 	public synchronized static void addWorker(ClientHandler handler) {
 		String name;
@@ -29,16 +29,16 @@ public class Controller {
 		workers.get(id).disconnect();
 	}
 
-	private static ArrayList<Task> getAllTasks() {
+	private synchronized static ArrayList<Task> getAllTasks() {
 		ArrayList<Task> allTasks = new ArrayList<>(pendingTasks);
 		for (WorkerNode worker : workers.values()) {
 			allTasks.addAll(worker.getActiveTasks());
-			allTasks.addAll(worker.getPendingTasks());
+			// allTasks.addAll(worker.getPendingTasks());
 		}
 		return allTasks;
 	}
 
-	private static Task getTaskByName(String name) {
+	private synchronized static Task getTaskByName(String name) {
 		ArrayList<Task> allTasks = getAllTasks();
 		for (Task task : allTasks)
 			if (task.getName().equals(name))
@@ -87,8 +87,9 @@ public class Controller {
 		if (worker != null && workers.get(worker).getHandler() == null)
 			return new Message(MessageType.ERROR, "The node is disconnected");
 		Task task = new Task(name, worker);
-		if (task.getIntendedWorker() == null) pendingTasks.add(task);
-		else workers.get(task.getIntendedWorker()).getPendingTasks().add(task);
+		// if (task.getIntendedWorker() == null) pendingTasks.add(task);
+		// else workers.get(task.getIntendedWorker()).getPendingTasks().add(task);
+		pendingTasks.add(task);
 		reschedule();
 		if (task.getCurrentWorker() != null)
 			return new Message(MessageType.OK, "Task scheduled on " + task.getCurrentWorker());
@@ -101,7 +102,7 @@ public class Controller {
 			return new Message(MessageType.ERROR, "No such task");
 		for (WorkerNode worker : workers.values()) {
 			worker.removeActiveTask(task);
-			worker.getPendingTasks().remove(task);
+			// worker.getPendingTasks().remove(task);
 		}
 		pendingTasks.remove(task);
 		reschedule();
@@ -118,10 +119,11 @@ public class Controller {
 			return new Message(MessageType.ERROR, "The node is disconnected");
 		for (Task task : worker.getActiveTasks()) {
 			task.setCurrentWorker(null);
-			if (task.getIntendedWorker() == null)
-				pendingTasks.add(task);
-			else
-				worker.getPendingTasks().add(task);
+			// if (task.getIntendedWorker() == null)
+			// 	pendingTasks.add(task);
+			// else
+			// 	worker.getPendingTasks().add(task);
+			pendingTasks.add(task);
 		}
 		worker.getActiveTasks().clear();
 		worker.setActive(false);
@@ -142,14 +144,41 @@ public class Controller {
 		return new Message(MessageType.OK, "Success");
 	}
 
+	// public synchronized static void reschedule() {
+	// 	for (WorkerNode worker : workers.values()) {
+	// 		if (!worker.isActive()) continue;
+	// 		int capacity = worker.getHandler().getWorkerCapacity();
+	// 		while (worker.getActiveTasks().size() < capacity && !worker.getPendingTasks().isEmpty())
+	// 			worker.addActiveTask(worker.getPendingTasks().remove());
+	// 		while (worker.getActiveTasks().size() < capacity && !pendingTasks.isEmpty())
+	// 			worker.addActiveTask(pendingTasks.remove());
+	// 	}
+	// }
+
 	public synchronized static void reschedule() {
+		ArrayList<Task> scheduled = new ArrayList<>();
+		for (Task task : pendingTasks) {
+			WorkerNode worker = (task.getIntendedWorker() == null ?
+				getLeastBusyWorker() : workers.get(task.getIntendedWorker()));
+			if (worker == null || !worker.isActive() ||
+				worker.getActiveTasks().size() == worker.getHandler().getWorkerCapacity()) continue;
+			worker.addActiveTask(task);
+			scheduled.add(task);
+		}
+		pendingTasks.removeAll(scheduled);
+	}
+
+	private synchronized static WorkerNode getLeastBusyWorker() {
+		WorkerNode result = null;
+		double minLoad = 2;
 		for (WorkerNode worker : workers.values()) {
 			if (!worker.isActive()) continue;
-			int capacity = worker.getHandler().getWorkerCapacity();
-			while (worker.getActiveTasks().size() < capacity && !worker.getPendingTasks().isEmpty())
-				worker.addActiveTask(worker.getPendingTasks().remove());
-			while (worker.getActiveTasks().size() < capacity && !pendingTasks.isEmpty())
-				worker.addActiveTask(pendingTasks.remove());
+			double load = worker.getActiveTasks().size() / (double)worker.getHandler().getWorkerCapacity();
+			if (load < minLoad) {
+				minLoad = load;
+				result = worker;
+			}
 		}
+		return result;
 	}
 }

@@ -11,7 +11,7 @@ public class WorkerNode {
 	private final ArrayList<Task> activeTasks = new ArrayList<>();
 	private ClientHandler handler;
 	private boolean isActive = true;
-	private final Queue<Task> pendingTasks = new LinkedList<>();
+	// private final Queue<Task> pendingTasks = new LinkedList<>();
 	private final String id;
 
 	public WorkerNode(ClientHandler handler) {
@@ -31,7 +31,7 @@ public class WorkerNode {
 		handler = null;
 		isActive = false;
 		activeTasks.clear();
-		pendingTasks.clear();
+		// pendingTasks.clear();
 	}
 
 	public ArrayList<Task> getActiveTasks() {
@@ -49,9 +49,9 @@ public class WorkerNode {
 		} catch (Exception ex) {}
 	}
 
-	public Queue<Task> getPendingTasks() {
-		return pendingTasks;
-	}
+	// public Queue<Task> getPendingTasks() {
+	// 	return pendingTasks;
+	// }
 
 	public void addActiveTask(Task task) {
 		activeTasks.add(task);
