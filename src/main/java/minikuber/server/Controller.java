@@ -66,7 +66,8 @@ public class Controller {
 			if (node.getHandler() == null)
 				result += node.getId() + " (status=DISCONNECTED)\n";
 			else
-				result += node.getId() + " [" +
+				result += node.getId() +
+					" [" + node.getActiveTasks().size() + "/" + node.getHandler().getWorkerCapacity() + "] [" +
 					node.getHandler().getSocket().getInetAddress() + ":" + node.getHandler().getSocket().getPort() +
 					"] (status=" + (node.isActive() ? "ACTIVE" : "DISABLED") + ")\n";
 		}
