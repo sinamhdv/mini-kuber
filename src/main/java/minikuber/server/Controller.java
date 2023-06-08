@@ -2,8 +2,6 @@ package minikuber.server;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Queue;
 
 import minikuber.shared.Message;
 import minikuber.shared.MessageType;
@@ -33,7 +31,6 @@ public class Controller {
 		ArrayList<Task> allTasks = new ArrayList<>(pendingTasks);
 		for (WorkerNode worker : workers.values()) {
 			allTasks.addAll(worker.getActiveTasks());
-			// allTasks.addAll(worker.getPendingTasks());
 		}
 		return allTasks;
 	}
@@ -87,8 +84,6 @@ public class Controller {
 		if (worker != null && workers.get(worker).getHandler() == null)
 			return new Message(MessageType.ERROR, "The node is disconnected");
 		Task task = new Task(name, worker);
-		// if (task.getIntendedWorker() == null) pendingTasks.add(task);
-		// else workers.get(task.getIntendedWorker()).getPendingTasks().add(task);
 		pendingTasks.add(task);
 		reschedule();
 		if (task.getCurrentWorker() != null)
@@ -102,7 +97,6 @@ public class Controller {
 			return new Message(MessageType.ERROR, "No such task");
 		for (WorkerNode worker : workers.values()) {
 			worker.removeActiveTask(task);
-			// worker.getPendingTasks().remove(task);
 		}
 		pendingTasks.remove(task);
 		reschedule();
@@ -119,10 +113,6 @@ public class Controller {
 			return new Message(MessageType.ERROR, "The node is disconnected");
 		for (Task task : worker.getActiveTasks()) {
 			task.setCurrentWorker(null);
-			// if (task.getIntendedWorker() == null)
-			// 	pendingTasks.add(task);
-			// else
-			// 	worker.getPendingTasks().add(task);
 			pendingTasks.add(task);
 		}
 		worker.getActiveTasks().clear();
@@ -143,17 +133,6 @@ public class Controller {
 		reschedule();
 		return new Message(MessageType.OK, "Success");
 	}
-
-	// public synchronized static void reschedule() {
-	// 	for (WorkerNode worker : workers.values()) {
-	// 		if (!worker.isActive()) continue;
-	// 		int capacity = worker.getHandler().getWorkerCapacity();
-	// 		while (worker.getActiveTasks().size() < capacity && !worker.getPendingTasks().isEmpty())
-	// 			worker.addActiveTask(worker.getPendingTasks().remove());
-	// 		while (worker.getActiveTasks().size() < capacity && !pendingTasks.isEmpty())
-	// 			worker.addActiveTask(pendingTasks.remove());
-	// 	}
-	// }
 
 	public synchronized static void reschedule() {
 		ArrayList<Task> scheduled = new ArrayList<>();
